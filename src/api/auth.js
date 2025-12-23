@@ -5,18 +5,25 @@ const API = axios.create({
 });
 
 // ---------------- SIGNUP ----------------
-export const signupUser = async (name, email, password) => {
+export const signupUser = async (name, email, password, phone) => {
   const { data } = await API.post("/signup", {
     name,
     email,
     password,
+    phone,
   });
   return data; // { msg, userId }
 };
 
-// ---------------- VERIFY OTP ----------------
+// ---------------- VERIFY EMAIL OTP ----------------
 export const verifyOTP = async (userId, otp) => {
   const { data } = await API.post("/verify", { userId, otp });
+  return data; // { msg }
+};
+
+// ---------------- RESEND EMAIL OTP ----------------
+export const resendEmailOTP = async (userId) => {
+  const { data } = await API.post("/resend-otp", { userId });
   return data; // { msg }
 };
 
@@ -27,4 +34,16 @@ export const loginUser = async (email, password) => {
     password,
   });
   return data; // { msg, token, user }
+};
+
+// ---------------- SEND PHONE OTP ----------------
+export const sendPhoneOTP = async (phone) => {
+  const { data } = await API.post("/send-phone-otp", { phone });
+  return data; // { msg }
+};
+
+// ---------------- VERIFY PHONE OTP ----------------
+export const verifyPhoneOTP = async (phone, otp) => {
+  const { data } = await API.post("/verify-phone", { phone, otp });
+  return data; // { msg }
 };

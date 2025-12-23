@@ -8,6 +8,7 @@ export default function VerifyEmail({ userId }) {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [resending, setResending] = useState(false);
 
   const handleVerify = async () => {
     if (!otp) {
@@ -19,7 +20,7 @@ export default function VerifyEmail({ userId }) {
       setLoading(true);
       setError("");
 
-      const res = await axios.post("http://localhost:5000/api/auth/verify-email", {
+      await axios.post("http://localhost:5000/api/auth/verify", {
         userId,
         otp,
       });
@@ -31,6 +32,24 @@ export default function VerifyEmail({ userId }) {
       setError(err.response?.data?.message || "Verification failed.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    try {
+      setResending(true);
+      setError("");
+
+      await axios.post("http://localhost:5000/api/auth/resend-otp", {
+        userId,
+      });
+
+      flashMsg("OTP resent to your email!");
+
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to resend OTP.");
+    } finally {
+      setResending(false);
     }
   };
 
@@ -47,15 +66,17 @@ export default function VerifyEmail({ userId }) {
       <label className="block text-sm font-medium">Enter OTP</label>
       <input
         type="text"
-        className="border rounded w-full px-3 py-2 mt-1 mb-3"
+        className="border rounded w-full px-3 py-2 mt-1 mb-3 text-center tracking-widest"
         placeholder="e.g. 482013"
+        maxLength={6}
         value={otp}
-        onChange={(e) => setOtp(e.target.value)}
+        onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
       />
 
       <button
         onClick={handleVerify}
-        className="w-full bg-pink-500 text-white py-2 rounded-full hover:bg-pink-600"
+        disabled={loading}
+        className="w-full bg-pink-500 text-white py-2 rounded-full hover:bg-pink-600 disabled:opacity-50"
       >
         {loading ? "Verifying..." : "Verify Email"}
       </button>
@@ -63,10 +84,11 @@ export default function VerifyEmail({ userId }) {
       <p className="text-center text-sm mt-4">
         Didn't get OTP?{" "}
         <button
-          className="text-pink-600 underline"
-          onClick={() => alert("Resend OTP API not connected yet")}
+          className="text-pink-600 underline disabled:opacity-50"
+          disabled={resending}
+          onClick={handleResend}
         >
-          Resend
+          {resending ? "Sending..." : "Resend"}
         </button>
       </p>
     </div>

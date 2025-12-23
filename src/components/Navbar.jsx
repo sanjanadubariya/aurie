@@ -1,18 +1,23 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingCart, User, Search } from "lucide-react";
+import { ShoppingCart, User, Search, Menu, X } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import { BASE64_PLACEHOLDERS } from "../assets/placeholders";
+import LoginModal from "./LoginModal";
+import RegisterModal from "./RegisterModal";
+import VerifyEmail from "./VerifyEmail";
+import PhoneVerify from "./PhoneVerify";
 
 export default function Navbar() {
-  const { cart, setRoute, favorites } = useApp();
+  const { cart, setRoute, user, logout } = useApp();
   const [showCat, setShowCat] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [showLogin, setShowLogin] = useState(false);
-    const [showRegister, setShowRegister] = useState(false);
-    const [verifyEmail, setVerifyEmail] = useState(null);
+  const [showRegister, setShowRegister] = useState(false);
+  const [verifyUserId, setVerifyUserId] = useState(null);
+  const [showPhoneVerify, setShowPhoneVerify] = useState(false);
 
   const categories = [
     { id: "festival", name: "Festival Candles", img: BASE64_PLACEHOLDERS[0] },
@@ -21,6 +26,14 @@ export default function Navbar() {
   ];
 
   const count = cart.reduce((s, it) => s + (it.qty || 0), 0);
+
+  const handleUserClick = () => {
+    if (user) {
+      setRoute("account");
+    } else {
+      setShowLogin(true);
+    }
+  };
 
   return (
     <header className="backdrop-blur bg-white/80 sticky top-0 shadow z-50 w-full">
@@ -33,33 +46,14 @@ export default function Navbar() {
           <span className="text-2xl font-extrabold text-purple-700">Aurie</span>
         </div>
 
+        {/* Mobile Menu Button */}
+        <button className="md:hidden" onClick={() => setMobileMenu(v => !v)}>
+          {mobileMenu ? <X className="text-purple-600" /> : <Menu className="text-purple-600" />}
+        </button>
+
         {/* Menu Desktop */}
         <nav className="hidden md:flex gap-6 items-center">
           <button onClick={() => setRoute("home")} className="hover:text-purple-600">Home</button>
-        <button className="md:hidden" onClick={() => setMobileMenu(v => !v)}>{mobileMenu && (
-  <motion.div className="md:hidden bg-white p-4 flex flex-col gap-4 shadow-lg">
-      <button onClick={() => setRoute('home')}>Home</button>
-      <button onClick={() => setShowCat(!showCat)}>Categories</button>
-      
-      {showCat && (
-        <div className="flex flex-col gap-2 ml-4">
-            {categories.map(c => (
-              <button key={c.id} onClick={() => setRoute('category:' + c.name)}>
-                <div className="flex items-center gap-2">
-                    <img src={c.img} className="w-10 h-10 rounded" />
-                    {c.name}
-                </div>
-              </button>
-            ))}
-        </div>
-      )}
-
-      <button onClick={() => setRoute('new')}>New Arrival</button>
-      <button onClick={() => setRoute('personalized')}>Personalized Gift</button>
-      <button onClick={() => setRoute('about')}>About Us</button>
-  </motion.div>
-)}
-</button>
             
           {/* Categories Dropdown */}
           <div className="relative">
@@ -104,7 +98,7 @@ export default function Navbar() {
             <Search className="text-purple-600 hover:scale-110 transition" />
           </button>
 
-          <button onClick={() => setRoute("account")}>
+          <button onClick={handleUserClick} title={user ? user.name : "Login"}>
             <User className="text-pink-600 hover:scale-110 transition" />
           </button>
 
@@ -118,6 +112,47 @@ export default function Navbar() {
           </button>
         </div>
       </div>
+
+      {/* Mobile Menu */}
+      {mobileMenu && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="md:hidden bg-white p-4 flex flex-col gap-4 shadow-lg border-t"
+        >
+          <button onClick={() => { setRoute('home'); setMobileMenu(false); }}>Home</button>
+          <button onClick={() => setShowCat(!showCat)}>Categories ▾</button>
+          
+          {showCat && (
+            <div className="flex flex-col gap-2 ml-4">
+              {categories.map(c => (
+                <button key={c.id} onClick={() => { setRoute('category:' + c.name); setMobileMenu(false); }}>
+                  <div className="flex items-center gap-2">
+                    <img src={c.img} className="w-10 h-10 rounded" />
+                    {c.name}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          <button onClick={() => { setRoute('new'); setMobileMenu(false); }}>New Arrival</button>
+          <button onClick={() => { setRoute('personalized'); setMobileMenu(false); }}>Personalized Gift</button>
+          <button onClick={() => { setRoute('about'); setMobileMenu(false); }}>About Us</button>
+          
+          {user ? (
+            <>
+              <button onClick={() => { setRoute('account'); setMobileMenu(false); }}>My Account</button>
+              <button onClick={() => { logout(); setMobileMenu(false); }} className="text-red-500">Logout</button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => { setShowLogin(true); setMobileMenu(false); }} className="text-pink-600">Login</button>
+              <button onClick={() => { setShowRegister(true); setMobileMenu(false); }} className="text-purple-600">Register</button>
+            </>
+          )}
+        </motion.div>
+      )}
 
       {/* Search Bar */}
       {searchOpen && (
@@ -133,20 +168,36 @@ export default function Navbar() {
           />
         </div>
       )}
-      <button onClick={() => setShowLogin(true)}>
-   <User className="text-pink-600" />
-</button>
 
-{showLogin && (
-  <LoginModal
-    close={() => setShowLogin(false)}
-    openVerify={(email)=>setVerifyEmail(email)}
-  />
-)}
-{showRegister && <RegisterModal close={()=>setShowRegister(false)} />}
-{verifyEmail && (
-  <VerifyEmail email={verifyEmail} close={()=>setVerifyEmail(null)} />
-)}
+      {/* Auth Modals */}
+      {showLogin && (
+        <LoginModal
+          close={() => setShowLogin(false)}
+          openVerify={(userId) => setVerifyUserId(userId)}
+          openRegister={() => setShowRegister(true)}
+        />
+      )}
+      
+      {showRegister && (
+        <RegisterModal 
+          close={() => setShowRegister(false)} 
+          openVerify={(userId) => setVerifyUserId(userId)}
+        />
+      )}
+      
+      {verifyUserId && (
+        <VerifyEmail 
+          userId={verifyUserId} 
+          close={() => setVerifyUserId(null)} 
+        />
+      )}
+      
+      {showPhoneVerify && (
+        <PhoneVerify 
+          close={() => setShowPhoneVerify(false)} 
+          onVerified={() => setShowPhoneVerify(false)}
+        />
+      )}
     </header>
   );
 }
