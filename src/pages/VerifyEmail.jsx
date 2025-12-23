@@ -20,7 +20,7 @@ export default function VerifyEmail({ userId }) {
       setLoading(true);
       setError("");
 
-      await axios.post("http://localhost:5000/api/auth/verify-email", {
+      await axios.post("http://localhost:5000/api/auth/verify", {
         userId,
         otp,
       });

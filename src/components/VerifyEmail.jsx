@@ -46,7 +46,7 @@ export default function VerifyEmail({ email, userId, close }) {
 
         <input 
           value={otp} 
-          onChange={(e)=>setOtp(e.target.value)}
+          onChange={(e)=>setOtp(e.target.value.replace(/\D/g, ''))}
           placeholder="6-digit OTP" 
           maxLength={6}
           className="border rounded w-full px-3 py-2 mb-2 text-center tracking-widest" 
