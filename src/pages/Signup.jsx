@@ -7,6 +7,7 @@ export default function Signup() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
 
   const [loading, setLoading] = useState(false);
@@ -15,7 +16,7 @@ export default function Signup() {
   const handleSignup = async () => {
     setError("");
     if (!name || !email || !password) {
-      setError("All fields are required.");
+      setError("Name, email, and password are required.");
       return;
     }
 
@@ -25,6 +26,7 @@ export default function Signup() {
       const res = await axios.post("http://localhost:5000/api/auth/signup", {
         name,
         email,
+        phone,
         password,
       });
 
@@ -62,6 +64,19 @@ export default function Signup() {
         onChange={(e) => setEmail(e.target.value)}
       />
 
+      <label className="block text-sm font-medium">Phone Number (optional)</label>
+      <div className="flex gap-2 mt-1 mb-3">
+        <span className="border rounded px-3 py-2 bg-gray-50 text-gray-600">+91</span>
+        <input
+          type="tel"
+          className="border rounded flex-1 px-3 py-2"
+          placeholder="9876543210"
+          value={phone}
+          maxLength={10}
+          onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+        />
+      </div>
+
       <label className="block text-sm font-medium">Password</label>
       <input
         type="password"
@@ -74,7 +89,7 @@ export default function Signup() {
       <button
         onClick={handleSignup}
         disabled={loading}
-        className="w-full bg-pink-500 text-white py-2 rounded-full hover:bg-pink-600"
+        className="w-full bg-pink-500 text-white py-2 rounded-full hover:bg-pink-600 disabled:opacity-50"
       >
         {loading ? "Creating Account..." : "Sign Up"}
       </button>

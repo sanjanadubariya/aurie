@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { uid, LS, isWinter } from "../data/helpers";
 import { SEEDED } from "../data/products";
+import { signupUser, loginUser, verifyOTP, sendPhoneOTP, verifyPhoneOTP, resendEmailOTP } from "../api/auth";
 
 const AppContext = createContext();
 export const useApp = () => useContext(AppContext);
@@ -85,11 +86,100 @@ export function AppProvider({ children }) {
     setRoute("order:" + order.id);
   }
 
+  // ---------------- AUTH FUNCTIONS ----------------
+  const [pendingUserId, setPendingUserId] = useState(null);
+
+  async function handleRegister(name, email, password, phone) {
+    try {
+      const data = await signupUser(name, email, password, phone);
+      setPendingUserId(data.userId);
+      flashMsg("Check your email for OTP!");
+      return { success: true, userId: data.userId };
+    } catch (err) {
+      flashMsg(err.response?.data?.message || "Signup failed");
+      return { success: false, error: err.response?.data?.message || "Signup failed" };
+    }
+  }
+
+  async function handleLogin(email, password) {
+    try {
+      const data = await loginUser(email, password);
+      if (data.token) {
+        setUser({ ...data.user, token: data.token });
+        flashMsg("Login successful!");
+        return { success: true };
+      }
+      // If email/phone not verified yet
+      if (data.userId) {
+        setPendingUserId(data.userId);
+        return { success: false, verify: true, userId: data.userId };
+      }
+      return { success: true };
+    } catch (err) {
+      flashMsg(err.response?.data?.message || "Login failed");
+      return { success: false, error: err.response?.data?.message || "Login failed" };
+    }
+  }
+
+  async function handleVerifyOtp(userId, otp) {
+    try {
+      await verifyOTP(userId || pendingUserId, otp);
+      flashMsg("Email verified successfully!");
+      setPendingUserId(null);
+      return { success: true };
+    } catch (err) {
+      flashMsg(err.response?.data?.message || "Verification failed");
+      return { success: false, error: err.response?.data?.message || "Verification failed" };
+    }
+  }
+
+  async function handleSendPhoneOTP(phone) {
+    try {
+      await sendPhoneOTP(phone);
+      flashMsg("OTP sent to your phone!");
+      return { success: true };
+    } catch (err) {
+      flashMsg(err.response?.data?.message || "Failed to send OTP");
+      return { success: false, error: err.response?.data?.message || "Failed to send OTP" };
+    }
+  }
+
+  async function handleVerifyPhoneOTP(phone, otp) {
+    try {
+      await verifyPhoneOTP(phone, otp);
+      flashMsg("Phone verified successfully!");
+      return { success: true };
+    } catch (err) {
+      flashMsg(err.response?.data?.message || "Phone verification failed");
+      return { success: false, error: err.response?.data?.message || "Phone verification failed" };
+    }
+  }
+
+  async function handleResendEmailOTP(userId) {
+    try {
+      await resendEmailOTP(userId || pendingUserId);
+      flashMsg("OTP resent to your email!");
+      return { success: true };
+    } catch (err) {
+      flashMsg(err.response?.data?.message || "Failed to resend OTP");
+      return { success: false, error: err.response?.data?.message || "Failed to resend OTP" };
+    }
+  }
+
+  function logout() {
+    setUser(null);
+    LS.set("aurie_user", null);
+    flashMsg("Logged out successfully");
+  }
+
   return (
     <AppContext.Provider value={{
       products, cart, user, orders, favorites,
       addToCart, updateQty, removeFromCart, clearCart,
-      toggleFav, placeOrder, setUser, setRoute, route, flash
+      toggleFav, placeOrder, setUser, setRoute, route, flash, flashMsg,
+      handleRegister, handleLogin, handleVerifyOtp,
+      handleSendPhoneOTP, handleVerifyPhoneOTP, handleResendEmailOTP,
+      pendingUserId, logout
     }}>
       {children}
     </AppContext.Provider>
