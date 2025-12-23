@@ -25,7 +25,8 @@ export default function Footer() {
         </div>
 
         <div className="mt-6 text-xs text-gray-500">
-          © {new Date().getFullYear()} Aurie Candles. All rights reserved.
+          <div>© {new Date().getFullYear()} Aurie Candles. All rights reserved.</div>
+          <div className="mt-1">Last updated: December 6, 2024</div>
         </div>
       </div>
     </footer>
